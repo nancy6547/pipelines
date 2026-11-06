@@ -196,6 +196,38 @@ class PipelineTaskTest(parameterized.TestCase):
         self.assertEqual(expected_cpu, task.container_spec.resources.cpu_limit)
 
     @parameterized.parameters(
+        {'cpu': 2},
+        {'cpu': 0.5},
+        {'cpu': None},
+        {'cpu': '1\n'},
+        {'cpu': '100m\n'},
+        {'cpu': 'abc'},
+    )
+    def test_set_invalid_cpu_request_limit_raises_value_error(self, cpu):
+        task = pipeline_task.PipelineTask(
+            component_spec=structures.ComponentSpec.from_yaml_documents(
+                V2_YAML
+            ),
+            args={'input1': 'value'},
+        )
+        with self.assertRaisesRegex(ValueError, 'Invalid cpu string'):
+            task.set_cpu_request(cpu)
+        with self.assertRaisesRegex(ValueError, 'Invalid cpu string'):
+            task.set_cpu_limit(cpu)
+
+    def test_set_memory_request_limit_rejects_trailing_newline(self):
+        task = pipeline_task.PipelineTask(
+            component_spec=structures.ComponentSpec.from_yaml_documents(
+                V2_YAML
+            ),
+            args={'input1': 'value'},
+        )
+        with self.assertRaisesRegex(ValueError, 'Invalid memory string'):
+            task.set_memory_request('1G\n')
+        with self.assertRaisesRegex(ValueError, 'Invalid memory string'):
+            task.set_memory_limit('1G\n')
+
+    @parameterized.parameters(
         {
             'gpu_limit': '1',
             'expected_gpu_number': '1',

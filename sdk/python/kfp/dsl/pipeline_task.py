@@ -437,7 +437,10 @@ class PipelineTask:
         if isinstance(cpu, pipeline_channel.PipelineChannel):
             cpu = str(cpu)
         else:
-            if re.match(r'([0-9]*[.])?[0-9]+m?$', cpu) is None:
+            if (
+                not isinstance(cpu, str) or
+                re.fullmatch(r'([0-9]*[.])?[0-9]+m?', cpu) is None
+            ):
                 raise ValueError(
                     'Invalid cpu string. Should be float or integer, or integer'
                     ' followed by "m".'
