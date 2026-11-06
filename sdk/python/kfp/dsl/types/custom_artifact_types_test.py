@@ -618,6 +618,32 @@ class TestGetCustomArtifactImportItemsFromFunction(
         self.assertEqual(actual, ['aiplatform', 'aiplatform.VertexDataset'])
 
 
+    def test_named_tuple_return_does_not_use_deprecated_ast_attributes(self):
+        """Regression test for #15029: ``ast.Constant.s`` is deprecated and
+        removed in Python 3.14, so parsing a NamedTuple return annotation must
+        not emit a DeprecationWarning (or raise AttributeError)."""
+        import warnings
+
+        import aiplatform
+        from aiplatform import VertexDataset
+
+        def func() -> typing.NamedTuple(
+            'Outputs',
+            [
+                ('a', aiplatform.VertexDataset),
+                ('b', VertexDataset),
+            ],
+        ):
+            pass
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            actual = custom_artifact_types.get_custom_artifact_base_symbol_for_return(
+                func, 'return-a'
+            )
+        self.assertEqual(actual, 'aiplatform')
+
+
 @unittest.skipIf(pydantic is None, 'pydantic is not installed')
 class TestGetParamToPydanticBasemodelClass(_TestCaseWithThirdPartyPackage):
     def test_no_ann(self):
